@@ -1,47 +1,42 @@
-                                                          
-
-name: Deploy to Azure VM
+  name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - main  # Runs when code is pushed to 'main'
+      - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set up SSH Key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.VM_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 13.94.185.228 >> ~/.ssh/known_hosts
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-    - name: Deploy files to VM
-      run: |
-        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r ./* adminuser@13.94.185.228 :~/my-python-app/
+      - name: Build and Tag Docker Image
+        run: docker build -t my-python-app:latest .
 
-    - name: Deploy Docker Container on VM
-      run: |
-        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no adminuser@13.94.185.228 << 'EOF'
-        # Ensure Docker is installed
-        sudo apt update && sudo apt install -y docker.io
+      - name: Push Docker Image to Docker Hub
+        run: |
+          docker tag my-python-app:latest ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
 
-        # Stop and remove old container if running
-        docker stop my-python-app || true
-        docker rm my-python-app || true
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
 
-        # Remove old images to free up space (optional)
-        docker rmi my-python-app:latest || true
-
-        # Navigate to project directory
-        cd ~/my-python-app
-
-        # Build and run the Docker container
-        docker build -t my-python-app:latest .
-        docker run -d -p 5000:5000 --name my-python-app my-python-app:latest
+    steps:
+      - name: SSH into Azure VM and Deploy Container
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: azureuser
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+            docker stop my-python-app || true
+            docker rm my-python-app || true
+            docker run -d -p 5000:5000 --name my-python-app ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
