@@ -1,46 +1,35 @@
-  name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
-     pull_request:
+  pull_request:
     branches:
       - main
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Build and Tag Docker Image
-        run: docker build -t my-python-app:latest .
-
-      - name: Push Docker Image to Docker Hub
+      - name: Build and push Docker image
         run: |
-          docker tag my-python-app:latest ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-python-app .
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-python-app
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: SSH into Azure VM and Deploy Container
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ secrets.AZURE_VM_IP }}
-          username: azureuser
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+      - name: Deploy to Azure VM
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/mtcazurekey azureuser@13.94.185.228 << EOF
+            docker pull ${{ secrets.DOCKER_USERNAME }}/my-python-app
             docker stop my-python-app || true
             docker rm my-python-app || true
-            docker run -d -p 5000:5000 --name my-python-app ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+            docker run -d --name my-python-app -p 80:80 ${{ secrets.DOCKER_USERNAME }}/my-python-app
+          EOF
