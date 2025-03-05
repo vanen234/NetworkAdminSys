@@ -1,13 +1,45 @@
 from flask import Flask
 
-# Initialize the Flask application
 app = Flask(__name__)
 
-# Define a route for the homepage
 @app.route('/')
 def home():
-    return "Hello Mr Kingsley Ibomo"
+    return """ 
+    <html>
+    <head>
+        <title>Flask App</title>
+        <style>
+            body {
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                height: 100vh;
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: 'Arial', sans-serif;
+                color: white;
+                text-align: center;
+            }
+            .container {
+                background: rgba(0, 0, 0, 0.2);
+                padding: 20px 40px;
+                border-radius: 10px;
+                box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+            }
+            h1 {
+                font-size: 2.5rem;
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 Welcome to our Network Administrations app! 🚀</h1>
+            <p>Hope you like it! 😎</p>
+        </div>
+    </body>
+    </html>
+    """
 
-# Ensure the app runs on 0.0.0.0 to be accessible outside the container
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
