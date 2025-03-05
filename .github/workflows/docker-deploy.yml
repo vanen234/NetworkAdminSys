@@ -19,7 +19,6 @@ jobs:
 
       - name: Set up SSH key
         run: |
-          mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/mtcazurekey
           chmod 600 ~/.ssh/mtcazurekey
 
@@ -32,13 +31,10 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/my-python-app
 
       - name: Deploy to Azure VM
-  run: |
-    echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/mtcazurekey
-    chmod 600 ~/.ssh/mtcazurekey
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/mtcazurekey azureuser@13.94.185.228 << EOF
-      docker pull ${{ secrets.DOCKER_USERNAME }}/my-python-app
-      docker stop my-python-app || true
-      docker rm my-python-app || true
-      docker run -d --name my-python-app -p 80:80 ${{ secrets.DOCKER_USERNAME }}/my-python-app
-    EOF
-
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/mtcazurekey azureuser@13.94.185.228 << EOF
+            docker pull ${{ secrets.DOCKER_USERNAME }}/my-python-app
+            docker stop my-python-app || true
+            docker rm my-python-app || true
+            docker run -d --name my-python-app -p 80:80 ${{ secrets.DOCKER_USERNAME }}/my-python-app
+          EOF
