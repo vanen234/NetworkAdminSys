@@ -38,5 +38,5 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/my-python-app
             docker stop my-python-app || true
             docker rm my-python-app || true
-            docker run -d --name my-python-app -p 80:80 ${{ secrets.DOCKER_USERNAME }}/my-python-app
+            docker run -d --name my-python-app -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/my-python-app
           EOF
