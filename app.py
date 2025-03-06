@@ -34,7 +34,7 @@ def home():
     </head>
     <body>
         <div class="container">
-            <h1>🚀 Welcome to our Network Administrations app! 🚀</h1>
+            <h1> Welcome to our Network Administrations app! </h1>
             <p>Hope you like it! 😎</p>
         </div>
     </body>
