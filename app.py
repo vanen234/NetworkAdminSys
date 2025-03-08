@@ -35,7 +35,7 @@ def home():
     <body>
         <div class="container">
             <h1> Welcome to our Network Administrations app Mr Kingsley Ibomo! </h1>
-            <p>Hope you like it! 😎</p>
+            <p>Hope you like it, and welcome fellow classmates! 😎</p>
         </div>
     </body>
     </html>
